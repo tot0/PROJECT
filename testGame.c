@@ -72,7 +72,10 @@ int main (int argc, const char * argv[]) {
     // action (students removed, game state updated) using a sample
     // sequence of dice throws and actions.
     testStudentAllocationAndMakeAction();
-
+    
+    // Tests weather a games isLegalAction function will allow a player to
+    // directly obtain IP or Paper. As well as moves during 'terra-nullis'.
+    testisLegalAction();
 
     printf ("All tests passed!\nYou are Awesome\n");
     return EXIT_SUCCESS;
