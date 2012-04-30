@@ -1,0 +1,218 @@
+/***************
+ *  runGame.c  *
+ *****************************************
+ * Uses the Game ADT to allow a user to  *
+ * run a simulation of the 'Geographic   *
+ * Discipline Model', the actions of VCs *
+ * received as text input.               *
+ *****************************************
+ *
+ * Group Members:
+ * Bruce Huang, David Zhao, James Payor, Lucas Pickup
+ *
+ * HS1917 - Hornsby Tute (Karla Burnett, Beth Crane)
+ *
+ *  Created 21/04/12
+ *  Version 1.5 - Last modified at 3 PM on 25/4
+[Please increment the sub-version & update the rough time]
+ *
+ */
+
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
+#include "Game.h"
+
+#define THD STUDENT_THD
+#define BPS STUDENT_BPS
+#define BQN STUDENT_BQN
+#define MJ STUDENT_MJ
+#define MTV STUDENT_MTV
+#define MMON STUDENT_MMONEY
+
+#define BOARD_DEFAULT_DISCIPLINES {BQN, MMON, MJ, \
+                                   MMON, MJ, BPS, MTV, \
+                                   MTV, BPS, MTV, BQN, MJ, \
+                                   BQN, THD, MJ, MMON, \
+                                   MTV, BQN, BPS}
+
+#define BOARD_DEFAULT_DICE_NOS    {9, 10, 8, \
+                                   12, 6, 5, 3, \
+                                   11, 3, 11, 4, 6, \
+                                   4, 9, 9, 2, \
+                                   8, 10, 5}
+
+#define TRUE 1
+#define FALSE 0
+
+// Used to rescale random numbers to a number between 0 and 1:
+#define RAND_SCALE ((double)1.0 / (double)RAND_MAX)
+
+#define DICE_START 1
+#define DICE_NUMBERS 6
+
+#define BOARD_DICE_START 2
+#define BOARD_DICE_END 12
+#define BOARD_DICE_RANGE (BOARD_DICE_END - BOARD_DICE_START + 1)
+
+#define WINNING_KPI_SCORE 150
+
+
+typedef struct _diceDiscipline {
+   int disciplineAt[NUM_REGIONS];
+   int diceAt[NUM_REGIONS];
+} diceDiscipline;
+
+
+
+int getDiceScore (void);
+action getPlayerAction (void);
+diceDicipline generateRandomGame (void);
+
+void displayGameState (Game gameState);
+void displayInvalidActionMessage (void);
+void displayEndGameInformation (void);
+double scaledRand (void);
+
+
+int main (int argc, char *argv[]) {
+
+    time_t seconds;
+    seconds = time(NULL); // will return seconds since January 1, 1970
+    // Seed the random number generator:
+    srand(seconds);
+
+
+    Game gameState;
+
+    char randomOrNot;
+    diceDiscipline board;
+    assert(scanf("Would you like a randomly generated game? (y/n) %s", randomOrNot) == 1);
+
+    if (randomOrNot == 'y') {
+        board = generateRandomGame();
+    } else {
+        board.disciplineAt[] = BOARD_DEFAULT_DISCIPLINES;
+        board.diceAt[] = BOARD_DEFAULT_DICE_NOS;
+    }
+
+    gameState = newGame (board.disciplineAt, board.diceAt);
+
+
+
+    int gameRunning = TRUE;
+
+    while (gameRunning) {
+
+        int diceScore = getDiceScore();
+        gameState = throwDice (gameState, diceScore);
+
+        displayGameState (gameState);
+
+
+        action playerAction = getPlayerAction();
+
+        while (playerAction.actionCode != PASS) {
+
+            if ( isLegalAction(gameState, playerAction) ) {
+                gameState = makeAction (gameState, playerAction);
+            } else {
+                displayInvalidActionMessage();
+            }
+
+
+            playerAction = getPlayerAction();
+
+        }
+
+
+        int currentPlayer = getWhoseTurn (gameState);
+        if (getKPIpoints(gameState, currentPlayer) >= WINNING_KPI_SCORE) {
+            gameRunning = FALSE;
+        }
+
+    }
+
+    displayEndGameInformation();
+
+
+
+    return EXIT_SUCCESS;
+
+}
+
+// Returns a random number between 0 and 1:
+double scaledRand (void) {
+    double result = rand() * RAND_SCALE;
+    return result;
+}
+
+// Very primitive will need to add a few if statements to make sure
+// there aren't too many of each discipline or dice number.
+diceDiscipline generateRandomGame (void) {
+    diceDiscipline randomGame;
+    int region = 0;
+
+    while (region < NUM_REGIONS) {
+        randomGame.disciplineAt[region] = scaledRand() * NUM_DISCIPLINES;
+
+        randomGame.diceAt[region] = scaledRand() * DICE_RANGE + DICE_START;
+
+        region++;
+    }
+
+    return randomGame;
+}
+
+// Returns a score between
+int getDiceScore (void) {
+
+    // Two random events must be simulated here (as they are independent):
+    int diceScore = scaledRand() * DICE_NUMBERS + DICE_START +
+                    scaledRand() * DICE_NUMBERS + DICE_START;
+
+    return diceScore;
+}
+
+action getPlayerAction (void) {
+    action playerAction;
+
+    printf(
+       "PASS = 0\n"
+       "BUILD_CAMPUS = 1\n"
+       "BUILD_GO8 = 2\n"
+       "OBTAIN_ARC = 3\n"
+       "START_SPINOFF = 4\n"
+       "OBTAIN_PUBLICATION = 5\n"
+    );
+
+    assert(scanfs("What action would you like to take? %d\n",
+                  playerAction.actionCode) == 1);
+
+    return playerAction;
+}
+
+
+void displayGameState (Game gameState) {
+
+    // Display the game state - or we could just not bother with this!!
+
+    // we could maybe display a very primitive view of each players stats
+    // but an actual game board will be VERY annoying to implement before Thursday.
+
+}
+
+void displayInvalidActionMessage (void) {
+
+    // Warn the user that the action they entered was invalid:
+    printf ("Invalid action.  Please make another decision.\n");
+
+}
+
+void displayEndGameInformation (void) {
+
+    // Display the game state and inform the player of the win.
+
+}
